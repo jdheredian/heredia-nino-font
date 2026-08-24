@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Heredia Niño — banco de pruebas</title>
+<style>
+  @font-face {
+    font-family: "Heredia Niño";
+    src: url("HerediaNino-Regular.ttf") format("truetype");
+    font-display: block;
+  }
+
+  :root {
+    --bg: #f4f2ee;
+    --panel: #ffffff;
+    --ink: #171512;
+    --line: #ddd8d0;
+    --accent: #b5402c;
+  }
+  [data-theme="dark"] {
+    --bg: #17140f;
+    --panel: #211d17;
+    --ink: #efe9df;
+    --line: #3a342a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    margin-right: auto;
+    letter-spacing: 0.02em;
+  }
+  #status {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+  }
+  #status.ok { color: #2c7a3f; border-color: #2c7a3f66; }
+  #status.err { color: var(--accent); border-color: var(--accent); }
+
+  .field { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .field label { opacity: 0.7; white-space: nowrap; }
+  input[type="range"] { width: 90px; }
+  input[type="number"] { width: 52px; }
+
+  button {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+
+  main { padding: 24px 20px 60px; max-width: 1100px; margin: 0 auto; }
+
+  section { margin-bottom: 36px; }
+  section h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    margin: 0 0 10px;
+  }
+
+  #editor {
+    width: 100%;
+    min-height: 1.4em;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 8px;
+    padding: 18px 20px;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "Heredia Niño", sans-serif;
+    text-transform: uppercase;
+  }
+  #editor:empty:before {
+    content: attr(data-placeholder);
+    opacity: 0.35;
+  }
+
+  .specimen {
+    font-family: "Heredia Niño", sans-serif;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 20px;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+
+  .grid-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+
+  .glyph-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--cell, 96px), 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .glyph-grid .cell {
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px 8px;
+    gap: 6px;
+  }
+  .glyph-grid .cell .box {
+    position: relative;
+    width: 100%;
+    height: 1em;
+    font-size: var(--gsize, 48px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .glyph-grid .cell .g {
+    font-family: "Heredia Niño", sans-serif;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+  .glyph-grid .cell .guide {
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    height: 0;
+    border-top: 1px dashed var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  body.guides .glyph-grid .cell .guide { opacity: 0.35; }
+  .glyph-grid .cell .guide.cap { top: 8%; }
+  .glyph-grid .cell .guide.base { top: 78%; }
+  .glyph-grid .cell .cp {
+    font-size: 9px;
+    opacity: 0.4;
+    font-family: ui-monospace, monospace;
+  }
+
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    font-size: 12px;
+    opacity: 0.6;
+    line-height: 1.6;
+  }
+  code { font-family: ui-monospace, monospace; background: var(--line); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Heredia Niño — banco de pruebas</h1>
+
+  <div class="field">
+    <label for="size">tamaño</label>
+    <input type="range" id="size" min="20" max="220" value="72">
+    <input type="number" id="sizeNum" min="8" max="400" value="72">
+  </div>
+
+  <div class="field">
+    <label for="tracking">tracking</label>
+    <input type="range" id="tracking" min="-100" max="400" value="0">
+  </div>
+
+  <div class="field">
+    <label for="theme">tema</label>
+    <select id="theme">
+      <option value="light">claro</option>
+      <option value="dark">oscuro</option>
+    </select>
+  </div>
+
+  <button id="reload">↻ recargar fuente</button>
+  <span id="status">cargando…</span>
+</header>
+
+<main>
+  <section>
+    <h2>Prueba libre</h2>
+    <div id="editor" contenteditable="true" data-placeholder="ESCRIBE ACÁ PARA PROBAR…" spellcheck="false"></div>
+  </section>
+
+  <section>
+    <h2>Palabras de prueba</h2>
+    <div class="specimen" style="font-size: 56px;">RESTREPO</div>
+    <div class="specimen" style="font-size: 56px; margin-top: 8px;">TRIDIMENSIONAL</div>
+    <div class="specimen" style="font-size: 56px; margin-top: 8px;">ARQUITECTURA</div>
+  </section>
+
+  <section>
+    <h2>Alfabeto</h2>
+    <div class="specimen" style="font-size: 44px; letter-spacing: 0.04em;">
+      ABCDEFGHIJKLMNOPQRSTUVWXYZ Ñ<br>
+      0123456789
+    </div>
+  </section>
+
+  <section>
+    <h2>Puntuación y símbolos</h2>
+    <div class="specimen" style="font-size: 44px; letter-spacing: 0.04em;">
+      . , : ; ! ¡ ? ¿ - – ( ) [ ] { }<br>
+      " ' / + % &amp; @ $ € ° « » = × ÷ &lt; &gt; | \ _ *
+    </div>
+  </section>
+
+  <section>
+    <h2>Rejilla de imperfecciones</h2>
+    <div class="grid-controls">
+      <div class="field">
+        <label for="gridZoom">tamaño</label>
+        <input type="range" id="gridZoom" min="24" max="120" value="48">
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="gridGuides" checked> guías (altura de mayúscula / línea de base)</label>
+      </div>
+    </div>
+
+    <h2>Alfabeto</h2>
+    <div class="glyph-grid" id="grid-alfabeto"></div>
+
+    <h2>Puntuación</h2>
+    <div class="glyph-grid" id="grid-puntuacion"></div>
+
+    <h2>Símbolos</h2>
+    <div class="glyph-grid" id="grid-simbolos"></div>
+  </section>
+</main>
+
+<footer>
+  Este archivo lee <code>HerediaNino-Regular.ttf</code> del mismo directorio vía <code>@font-face</code>.
+  Los navegadores cachean fuentes agresivamente: después de correr <code>python3 build_font.py</code>,
+  usa el botón «recargar fuente» (o Cmd+Shift+R) para ver los cambios.
+  Si lo abres como <code>file://</code> y la fuente no carga, sirve el directorio con
+  <code>python3 -m http.server</code> y abre <code>http://localhost:8000/preview.html</code>.
+</footer>
+
+<script>
+  const GROUPS = {
+    "grid-alfabeto": "ABCDEFGHIJKLMNOPQRSTUVWXYZÑÁÉÍÓÚÜ0123456789",
+    "grid-puntuacion": ".,:;!¡?¿-–()[]{}\"'",
+    "grid-simbolos": "/+%&@$€°«»=×÷<>|\\_*",
+  };
+
+  for (const [gridId, chars] of Object.entries(GROUPS)) {
+    const grid = document.getElementById(gridId);
+    for (const ch of chars) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const box = document.createElement("div");
+      box.className = "box";
+
+      const capGuide = document.createElement("div");
+      capGuide.className = "guide cap";
+      const baseGuide = document.createElement("div");
+      baseGuide.className = "guide base";
+
+      const g = document.createElement("div");
+      g.className = "g";
+      g.textContent = ch;
+
+      box.appendChild(capGuide);
+      box.appendChild(baseGuide);
+      box.appendChild(g);
+
+      const cp = document.createElement("div");
+      cp.className = "cp";
+      cp.textContent = "U+" + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+
+      cell.appendChild(box);
+      cell.appendChild(cp);
+      grid.appendChild(cell);
+    }
+  }
+
+  const gridZoom = document.getElementById("gridZoom");
+  const gridGuides = document.getElementById("gridGuides");
+  function applyGridZoom(v) {
+    document.documentElement.style.setProperty("--gsize", v + "px");
+    document.documentElement.style.setProperty("--cell", (v * 2) + "px");
+  }
+  gridZoom.addEventListener("input", () => applyGridZoom(gridZoom.value));
+  applyGridZoom(48);
+
+  function applyGuides() {
+    document.body.classList.toggle("guides", gridGuides.checked);
+  }
+  gridGuides.addEventListener("change", applyGuides);
+  applyGuides();
+
+  const editor = document.getElementById("editor");
+  const sizeSlider = document.getElementById("size");
+  const sizeNum = document.getElementById("sizeNum");
+  const tracking = document.getElementById("tracking");
+  const themeSel = document.getElementById("theme");
+  const status = document.getElementById("status");
+  const reloadBtn = document.getElementById("reload");
+
+  function applySize(v) {
+    editor.style.fontSize = v + "px";
+    sizeSlider.value = v;
+    sizeNum.value = v;
+  }
+  sizeSlider.addEventListener("input", () => applySize(sizeSlider.value));
+  sizeNum.addEventListener("input", () => applySize(sizeNum.value));
+  applySize(72);
+
+  tracking.addEventListener("input", () => {
+    editor.style.letterSpacing = (tracking.value / 1000) + "em";
+  });
+
+  themeSel.addEventListener("change", () => {
+    document.documentElement.setAttribute("data-theme", themeSel.value);
+  });
+
+  reloadBtn.addEventListener("click", () => location.reload());
+
+  async function checkFont() {
+    try {
+      await document.fonts.load('16px "Heredia Niño"');
+      const loaded = [...document.fonts].some(f => f.family === "Heredia Niño" && f.status === "loaded");
+      if (loaded) {
+        status.textContent = "fuente cargada";
+        status.className = "ok";
+      } else {
+        throw new Error("no loaded");
+      }
+    } catch (e) {
+      status.textContent = "no se pudo cargar la fuente — revisa la ruta o sirve por http";
+      status.className = "err";
+    }
+  }
+  checkFont();
+</script>
+
+</body>
+</html>
